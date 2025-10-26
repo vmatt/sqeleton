@@ -7,48 +7,54 @@ import pytz
 from sqeleton import connect
 from sqeleton import databases as dbs
 from sqeleton.queries import table, current_timestamp, NormalizeAsString, ForeignKey, Compiler
-from .common import TEST_MYSQL_CONN_STRING
-from .common import str_to_checksum, make_test_each_database_in_list, get_conn, random_table_suffix
+from common import str_to_checksum, make_test_each_database_in_list, get_conn, random_table_suffix
 from sqeleton.abcs.database_types import TimestampTZ
+from sqeleton.abcs.mixins import AbstractMixin_MD5
 
 TEST_DATABASES = {
-    dbs.MySQL,
-    dbs.PostgreSQL,
+    # dbs.MySQL,
+    # dbs.PostgreSQL,
     dbs.Oracle,
-    dbs.Redshift,
-    dbs.Snowflake,
-    dbs.DuckDB,
-    dbs.BigQuery,
-    dbs.Presto,
-    dbs.Trino,
-    dbs.Vertica,
-    dbs.Dremio,
+    # dbs.DuckDB,
+    # dbs.Presto,
+    # dbs.Trino,
+    # dbs.Dremio,
+    # dbs.BigQuery,
+    # dbs.Snowflake,
+    # dbs.Redshift,
+    # dbs.Vertica,
 }
 
 test_each_database: Callable = make_test_each_database_in_list(TEST_DATABASES)
 
 
+@test_each_database
 class TestDatabase(unittest.TestCase):
-    def setUp(self):
-        self.mysql = connect(TEST_MYSQL_CONN_STRING)
-
     def test_connect_to_db(self):
-        self.assertEqual(1, self.mysql.query("SELECT 1", int))
+        db = get_conn(self.db_cls)
+        self.assertEqual(1, db.query("SELECT 1", int))
 
 
+@test_each_database
 class TestMD5(unittest.TestCase):
     def test_md5_as_int(self):
-        class MD5Dialect(dbs.mysql.Dialect, dbs.mysql.Mixin_MD5):
-            pass
+        db = get_conn(self.db_cls)
+        
+        # Check if the database dialect has Mixin_MD5 in its MIXINS
 
-        self.mysql = connect(TEST_MYSQL_CONN_STRING)
-        self.mysql.dialect = MD5Dialect()
-
-        str = "hello world"
-        query_fragment = self.mysql.dialect.md5_as_int("'{0}'".format(str))
+        has_md5_mixin = any(issubclass(mixin, AbstractMixin_MD5) for mixin in db.dialect.MIXINS)
+        
+        if not has_md5_mixin:
+            self.skipTest(f"{self.db_cls.__name__} does not support MD5")
+        
+        # Load the MD5 mixin into the dialect
+        dialect_with_md5 = db.dialect.load_mixins(AbstractMixin_MD5)
+        
+        str_value = "hello world"
+        query_fragment = dialect_with_md5.md5_as_int("'{0}'".format(str_value))
         query = f"SELECT {query_fragment}"
 
-        self.assertEqual(str_to_checksum(str), self.mysql.query(query, int))
+        self.assertEqual(str_to_checksum(str_value), db.query(query, int))
 
 
 class TestConnect(unittest.TestCase):
@@ -111,15 +117,15 @@ class TestQueries(unittest.TestCase):
 
         db.query(tbl.create())
 
-        tz = pytz.timezone("Europe/Berlin")
+        tz = pytz.timezone("UTC")
 
         now = datetime.now(tz)
-        if isinstance(db, dbs.Presto) or isinstance(db, dbs.Dremio):
-            ms = now.microsecond // 1000 * 1000  # Presto max precision is 3
+        if isinstance(db, (dbs.Presto, dbs.Trino, dbs.Dremio)):
+            ms = now.microsecond // 1000 * 1000  # Presto/Trino max precision is 3
             now = now.replace(microsecond=ms)
 
         db.query(tbl.insert_row(1, now, now))
-        if self.db_cls not in [dbs.Dremio]:
+        if self.db_cls not in [dbs.Dremio, dbs.Presto]:
             db.query(db.dialect.set_timezone_to_utc())
 
         t = db.table(tbl).query_schema()

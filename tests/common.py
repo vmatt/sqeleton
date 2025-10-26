@@ -11,7 +11,6 @@ import sqeleton
 from parameterized import parameterized_class
 
 from sqeleton import databases as db
-from sqeleton import connect
 from sqeleton.abcs.mixins import AbstractMixin_NormalizeValue
 from sqeleton.queries import table
 from sqeleton.databases import Database
@@ -22,11 +21,14 @@ from sqeleton.query_utils import drop_table
 TEST_MYSQL_CONN_STRING: str = "mysql://mysql:Password1@localhost/mysql"
 TEST_POSTGRESQL_CONN_STRING: str = "postgresql://postgres:Password1@localhost/postgres"
 TEST_SNOWFLAKE_CONN_STRING: str = os.environ.get("SNOWFLAKE_URI") or None
+# presto uri for provided docker - "presto://presto:presto@localhost:8080/memory/default"
 TEST_PRESTO_CONN_STRING: str = os.environ.get("PRESTO_URI") or None
 TEST_BIGQUERY_CONN_STRING: str = os.environ.get("BIGQUERY_URI") or None
 TEST_REDSHIFT_CONN_STRING: str = os.environ.get("REDSHIFT_URI") or None
-TEST_ORACLE_CONN_STRING: str = None
+# oracle uri for provided docker - "oracle://oracle:Password1@localhost/app"
+TEST_ORACLE_CONN_STRING: str = os.environ.get("ORACLE_URI") or None
 TEST_DATABRICKS_CONN_STRING: str = os.environ.get("DATABRICKS_URI")
+# trino uri for provided docker - "trino://trino@localhost:8081/memory/default"
 TEST_TRINO_CONN_STRING: str = os.environ.get("TRINO_URI") or None
 # clickhouse uri for provided docker - "clickhouse://clickhouse:Password1@localhost:9000/clickhouse"
 TEST_CLICKHOUSE_CONN_STRING: str = os.environ.get("CLICKHOUSE_URI")
