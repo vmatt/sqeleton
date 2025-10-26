@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
     postgres:
       container_name: dd-postgresql
@@ -50,9 +48,24 @@ services:
       networks:
         - local
 
+    oracle:
+      container_name: dd-oracle
+      image: gvenzl/oracle-free:slim-faststart
+      hostname: oracle-db
+      ports:
+        - "1521:1521"
+      env_file:
+        - dev/dev.env
+      volumes:
+        - oracle-volume:/opt/oracle/oradata
+      networks:
+        - local
+      restart: always
+
+
     clickhouse:
       container_name: dd-clickhouse
-      image: clickhouse/clickhouse-server:21.12.3.32
+      image: clickhouse/clickhouse-server:latest
       restart: always
       volumes:
           - clickhouse-data:/var/lib/clickhouse:delegated
@@ -145,6 +158,7 @@ volumes:
   # The vertica docker image is 404
   #vertica-data:
   dremio-data:
+  oracle-volume:
 
 networks:
   local:
