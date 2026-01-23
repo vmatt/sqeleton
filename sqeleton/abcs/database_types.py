@@ -54,10 +54,6 @@ class FractionalType(NumericType):
     pass
 
 
-class Float(FractionalType):
-    python_type = float
-
-
 class IKey(ABC):
     "Interface for ColType, for using a column as a key in table."
 
@@ -68,6 +64,14 @@ class IKey(ABC):
 
     def make_value(self, value):
         return self.python_type(value)
+
+
+class Float(FractionalType, IKey):
+    @property
+    def python_type(self) -> type:
+        if self.precision == 0:
+            return int
+        return float
 
 
 class Decimal(FractionalType, IKey):  # Snowflake may use Decimal as a key
