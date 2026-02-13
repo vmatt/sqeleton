@@ -46,7 +46,7 @@ class AbstractMixin_NormalizeValue(AbstractMixin):
     def normalize_uuid(self, value: str, coltype: ColType_UUID) -> str:
         """Creates an SQL expression, that strips uuids of artifacts like whitespace."""
         if isinstance(coltype, String_UUID):
-            return f"TRIM({value})"
+            return f"TRIM(COALESCE({value},'None'))"
         return self.to_string(value)
 
     def normalize_value_by_type(self, value: str, coltype: ColType) -> str:

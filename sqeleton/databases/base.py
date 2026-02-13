@@ -535,6 +535,8 @@ class Database(AbstractDatabase[T]):
 
             if self.SUPPORTS_ALPHANUMS:  # Anything but MySQL (so far)
                 alphanum_samples = [s for s in samples if String_Alphanum.test_value(s)]
+                # if col_name == 'SUBMISSION_VERSION':
+                #     breakpoint()
                 if alphanum_samples:
                     if len(alphanum_samples) != len(samples):
                         logger.debug(
